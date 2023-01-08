@@ -14,6 +14,8 @@ use keybd_event::KeyboardKey::{KeyA, KeyC, KeyV};
 use std::thread::sleep;
 use std::time::Duration;
 
+use winput::{message_loop};
+
 pub struct KB {
     pub insert: KeyBondingInstance,
     pub select_all: KeyBondingInstance,
@@ -40,38 +42,49 @@ impl KB {
     }
 }
 
-fn main() {
+fn main() -> Result<(), &'static str> {
     let mut clip_prov: ClipboardContext =
-        ClipboardProvider::new().expect("init clip provider failed!");
-
-    let mut args : Vec<String> = std::env::args().collect();
-    println!("args - {:#?}", args);
+        ClipboardProvider::new().expect("Clipboard Context create fail!");
     
-    let keys_use_handler = config::args_handler(&mut args);
+    let keys_use_handler = 
+        config::args_handler(&mut std::env::args().collect()).expect("Error get keys shortcut");
     
     let mut kb = KB::init();
     let sp_duration = Duration::from_millis(200);
+    
+    let translate_keys: HashMap<char, char> = config::get_keys();
+    let receiver = message_loop::start().unwrap();    
     loop {
-        if keys_use_handler.additional_key.is_down() && keys_use_handler.key.is_down() {
-            sleep(sp_duration);
-            kb.select_all.launching();
-            sleep(sp_duration);
-            kb.copy.launching();
-            sleep(sp_duration);
-            translate(&mut clip_prov, config::get_keys());
-            sleep(sp_duration);
-            kb.select_all.launching();
-            sleep(sp_duration);
-            kb.insert.launching();
-            sleep(sp_duration);
+        match receiver.next_event() {
+            message_loop::Event::Keyboard {action: winput::Action::Press, ..} => {
+                if keys_use_handler.additional_key.is_down() && keys_use_handler.key.is_down() {
+                    sleep(sp_duration);
+                    kb.select_all.launching();
+                    sleep(sp_duration);
+                    kb.copy.launching();
+                    sleep(sp_duration);
+                    match translate(&mut clip_prov, &translate_keys) {
+                        Err(e) => match e {
+                            "Error get content from clipboard" | "Error set content from clipboard" => continue,
+                            _ => return Err(e),
+                        },
+                        _ => (),
+                    };
+                    sleep(sp_duration);
+                    kb.select_all.launching();
+                    sleep(sp_duration);
+                    kb.insert.launching();
+                    sleep(sp_duration);
+                }
+            }, _ => (),
         }
     }
 }
 
-fn translate(clip_provider: &mut ClipboardContext, keys: HashMap<char, char>) {
+fn translate(clip_provider: &mut ClipboardContext, keys: &HashMap<char, char>) -> Result<(), &'static str> {
     let mut str_for_translate = match clip_provider.get_contents() {
         Ok(x) => x.to_lowercase(),
-        Err(_) => panic!("error get content"),
+        Err(_) => return Err("Error get content from clipboard"),
     };
 
     str_for_translate = str_for_translate
@@ -79,8 +92,8 @@ fn translate(clip_provider: &mut ClipboardContext, keys: HashMap<char, char>) {
         .map(|ch| *keys.get(&ch).unwrap_or(&ch))
         .collect();
 
-    match clip_provider.set_contents(str_for_translate) {
-        Ok(_) => {},
-        Err(_) => panic!("error set content")
+    return match clip_provider.set_contents(str_for_translate) {
+        Ok(_) => Ok(()),
+        Err(_) => return Err("Error set content from clipboard"),
     }
 }

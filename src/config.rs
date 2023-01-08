@@ -1,48 +1,14 @@
 use std::collections::HashMap;
+use std::fs::read_to_string;
 use winput::{Vk};
-
 
 // shortcut for invoke translate
 pub const ADDITIONAL_KEY: Vk = Vk::Alt;
 pub const KEY: Vk = Vk::T;
 
 pub fn get_keys() -> HashMap<char, char> {
-    return HashMap::from([
-        ('q', 'й'),
-        ('w', 'ц'),
-        ('e', 'у'),
-        ('r', 'к'),
-        ('t', 'е'),
-        ('y', 'н'),
-        ('u', 'г'),
-        ('i', 'ш'),
-        ('o', 'щ'),
-        ('p', 'з'),
-        ('[', 'х'),
-        (']', 'ъ'),
-        ('a', 'ф'),
-        ('s', 'ы'),
-        ('d', 'в'),
-        ('f', 'а'),
-        ('g', 'п'),
-        ('h', 'р'),
-        ('j', 'о'),
-        ('k', 'л'),
-        ('l', 'д'),
-        (';', 'ж'),
-        ('\'', 'э'),
-        ('\\', '\\'),
-        ('z', 'я'),
-        ('x', 'ч'),
-        ('c', 'с'),
-        ('v', 'м'),
-        ('b', 'и'),
-        ('n', 'т'),
-        ('m', 'ь'),
-        (',', 'б'),
-        ('.', 'ю'),
-        ('/', '.'),
-    ]);
+    return serde_json::from_str(
+        &*read_to_string("culture_info.json").unwrap()).unwrap();
 }
 
 pub struct KeysHandlers {
@@ -50,16 +16,15 @@ pub struct KeysHandlers {
     pub additional_key: Vk 
 }
 
-pub fn args_handler(args: &mut Vec<String>) -> KeysHandlers {
-    args.remove(0);
+pub fn args_handler(args: &mut Vec<String>) -> Result<KeysHandlers, &'static str> {
     let mut exit = KeysHandlers{additional_key: ADDITIONAL_KEY, key: KEY};
-    
-    if args.is_empty() { return exit }
+    if args.len() <= 1{ return Ok(exit) }
     
     let mut k_v : HashMap<String, String> = HashMap::new();
     let mut prev_val : &String = &String::new();
     
     for (i,str) in args.iter().enumerate() {
+        if i == 0 { continue }
         if i%2 == 0 && args.len() > i {
             prev_val = &str;
         } 
@@ -67,20 +32,23 @@ pub fn args_handler(args: &mut Vec<String>) -> KeysHandlers {
     }
     
     for (key, val) in k_v {
-        match key.as_str() {
-            "--addit_key" => {exit.additional_key = what_is_additional_key(&val) },
+        match key.to_lowercase().as_str() {
+            "--addit_key" => exit.additional_key = match what_is_additional_key(&val) {
+                Ok(x) => x,
+                Err(_) => return Ok(exit)
+            },
             _ => (),
         }
     }
-    exit
+    Ok(exit)
 }
 
-fn what_is_additional_key(kb_key: &String) -> Vk {
-    match kb_key.as_str() {
-        "alt" => Vk::Alt,
-        "ctrl" | "control" => Vk::Control,
-        "shift" => Vk::Shift,
-        "win" | "windows" => Vk::RightWin,
-        _ => panic!("Not find that key"),
+fn what_is_additional_key(kb_key: &String) -> Result<Vk, &'static str> {
+    return match kb_key.to_lowercase().as_str() {
+        "alt" => Ok( Vk::Alt),
+        "ctrl" | "control" => Ok(Vk::Control),
+        "shift" => Ok(Vk::Shift),
+        "win" | "windows" => Ok(Vk::RightWin),
+        _ => Err("Not have that key"),
     }
 }
