@@ -46,37 +46,33 @@ fn main() -> Result<(), &'static str> {
     let mut clip_prov: ClipboardContext =
         ClipboardProvider::new().expect("Clipboard Context create fail!");
     
-    let keys_use_handler = 
+    let config = 
         config::args_handler(&mut std::env::args().collect()).expect("Error get keys shortcut");
     
     let mut kb = KB::init();
-    let sp_duration = Duration::from_millis(200);
     
-    let translate_keys: HashMap<char, char> = config::get_keys();
-    let receiver = message_loop::start().unwrap();    
+    let translate_keys: HashMap<char, char> = config::get_keys(config.culture_info.as_str());
+    let receiver = message_loop::start().unwrap();
+    
+    let sp_duration = Duration::from_millis(200);
     loop {
-        match receiver.next_event() {
-            message_loop::Event::Keyboard {action: winput::Action::Press, ..} => {
-                if keys_use_handler.additional_key.is_down() && keys_use_handler.key.is_down() {
-                    sleep(sp_duration);
-                    kb.select_all.launching();
-                    sleep(sp_duration);
-                    kb.copy.launching();
-                    sleep(sp_duration);
-                    match translate(&mut clip_prov, &translate_keys) {
-                        Err(e) => match e {
-                            "Error get content from clipboard" | "Error set content from clipboard" => continue,
-                            _ => return Err(e),
-                        },
-                        _ => (),
-                    };
-                    sleep(sp_duration);
-                    kb.select_all.launching();
-                    sleep(sp_duration);
-                    kb.insert.launching();
-                    sleep(sp_duration);
-                }
-            }, _ => (),
+        if let message_loop::Event::Keyboard {action: winput::Action::Press, ..} = receiver.next_event() {
+            if config.keys_handler.additional_key.is_down() && config.keys_handler.key.is_down() {
+                sleep(sp_duration);
+                kb.select_all.launching();
+                sleep(sp_duration);
+                kb.copy.launching();
+                sleep(sp_duration);
+                if let Err(e) = translate(&mut clip_prov, &translate_keys) { match e {
+                    "Error get content from clipboard" | "Error set content from clipboard" => continue,
+                    _ => return Err(e),
+                } };
+                sleep(sp_duration);
+                kb.select_all.launching();
+                sleep(sp_duration);
+                kb.insert.launching();
+                sleep(sp_duration);
+            }
         }
     }
 }
