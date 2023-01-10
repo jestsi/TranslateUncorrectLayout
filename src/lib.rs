@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::thread::sleep;
 
 use winput::{message_loop};
-use crate::config::Config;
+use crate::config::{Config, KeysHandlers};
 use crate::kb_output::KbOutput;
 
 const SLP_DURATION: std::time::Duration = std::time::Duration::from_millis(200);
@@ -15,16 +15,16 @@ const SLP_DURATION: std::time::Duration = std::time::Duration::from_millis(200);
 pub fn run() -> Result<(), &'static str> {
     let clipbd_context: ClipboardContext =
         ClipboardProvider::new().expect("Clipboard Context create fail!");
-    let cfg =
-        config::args_handler(&mut std::env::args().collect()).expect("Error get keys shortcut");
-    let kb = KbOutput::default();
-    start_loop(cfg, kb, clipbd_context).expect_err("Error on start loop");
-    Ok(())
+    let mut cfg = Config::new(KeysHandlers::KEY, KeysHandlers::ADDITIONAL_KEY);
+    cfg.setting_config();
+    
+    start_loop(&mut cfg, clipbd_context)
 }
 
-fn start_loop(cfg: Config, mut kb: KbOutput, mut clipbd_context: ClipboardContext) -> Result<(), &'static str> {
-    let translate_keys: HashMap<char, char> = config::get_keys(cfg.culture_info_path.as_str());
+fn start_loop(cfg: &mut config::Config,  mut clipbd_context: ClipboardContext) -> Result<(), &'static str> {
     let receiver = message_loop::start().unwrap();
+    let mut kb = KbOutput::default();
+    
     loop {
         if let message_loop::Event::Keyboard {action: winput::Action::Press, ..} = receiver.next_event() {
             if cfg.keys_handler.additional_key.is_down() && cfg.keys_handler.key.is_down() {
@@ -35,7 +35,7 @@ fn start_loop(cfg: Config, mut kb: KbOutput, mut clipbd_context: ClipboardContex
                 sleep(SLP_DURATION);
                 
                 let string_for_translate = clipbd_context.get_contents().expect("Error get content from clipboard").to_lowercase();
-                let translated_result = translate(string_for_translate, &translate_keys);
+                let translated_result = translate(string_for_translate, cfg.culture_info.as_mut().unwrap());
                 
                 if let Err(e) = translated_result
                 {
