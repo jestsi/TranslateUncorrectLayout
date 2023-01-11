@@ -72,8 +72,25 @@ fn translate(
     str_for_translate: String,
     keys: &HashMap<char, char>,
 ) -> Result<String, &'static str> {
+    let count_x_chars = str_for_translate
+        .chars()
+        .filter(|x| !x.is_alphabetic() || x.is_ascii_alphabetic())
+        .count();
+    let mut keys_mut = keys.clone();
+    if count_x_chars != str_for_translate.len() {
+        keys_mut = inverse_hashmap(&keys_mut);
+    }
+
     Ok(str_for_translate
         .chars()
-        .map(|ch| *keys.get(&ch).unwrap_or(&ch))
+        .map(|ch| *keys_mut.get(&ch).unwrap_or(&ch))
         .collect())
+}
+
+fn inverse_hashmap(keys: &HashMap<char, char>) -> HashMap<char, char> {
+    let mut exit = HashMap::new();
+    for (key, value) in keys {
+        exit.insert(*value, *key);
+    }
+    exit.to_owned()
 }
