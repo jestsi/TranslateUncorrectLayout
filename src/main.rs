@@ -1,5 +1,10 @@
-use translate_app::run;
+use std::thread::sleep;
+use std::time::Duration;
 
 fn main() {
-     run().expect("Error run");
+     if let Err(e) = translate_app::run() {
+          translate_app::hide_console_window(false);
+          eprintln!("Application error [{}]", e);
+          sleep(Duration::from_secs(5));
+     }
 }
