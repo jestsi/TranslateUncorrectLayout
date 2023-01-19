@@ -11,6 +11,7 @@ clipboard = "0.5.0"
 winput = "0.2.5"
 keybd_event = "0.1.2"
 serde_json = "1.0.91"
+winapi = {version = "0.3", features = ["wincon", "winuser"]}
 
 [dependencies.serde]
 version = "1.0.152"

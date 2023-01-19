@@ -323,6 +323,7 @@ dependencies = [
  "keybd_event",
  "serde",
  "serde_json",
+ "winapi",
  "winput",
 ]
 

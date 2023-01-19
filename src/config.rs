@@ -6,7 +6,7 @@ use winput::Vk;
 
 pub struct KeysHandlers {
     pub key: Vk,
-    pub additional_key: Vk,
+    pub special_key: Vk,
 }
 pub struct Config {
     pub keys_handler: KeysHandlers,
@@ -15,7 +15,7 @@ pub struct Config {
 }
 
 impl KeysHandlers {
-    pub const ADDITIONAL_KEY: Vk = Vk::Alt;
+    pub const SPECIAL_KEY: Vk = Vk::Alt;
     pub const KEY: Vk = Vk::T;
 }
 impl Config {
@@ -26,47 +26,49 @@ impl Config {
             culture_info_path: Self::CULTURE_INFO_PATH.parse().unwrap(),
             keys_handler: KeysHandlers {
                 key,
-                additional_key: sp_key,
+                special_key: sp_key,
             },
             culture_info: None,
         }
     }
 
-    pub fn setting_config(&mut self) {
+    pub fn setting_config(&mut self) -> Result<(), &'static str> {
         let args: Vec<String> = args().collect();
 
         if args.len() <= 1 {
-            self.culture_info = Some(Self::get_keys(&self.culture_info_path));
-            return;
+            self.culture_info = Some(Self::get_keys(&self.culture_info_path)?);
+            return Ok(());
         }
         let dictionary_args = Self::get_format_dictanary(&args);
+        let mut hide_console = true;
         for (key, value) in dictionary_args {
             match key.to_lowercase().as_str() {
                 "--sp-key" => {
-                    self.keys_handler.additional_key =
-                        Self::what_is_special_key(&value).unwrap_or(KeysHandlers::ADDITIONAL_KEY)
+                    self.keys_handler.special_key =
+                        Self::what_is_special_key(&value).unwrap_or(KeysHandlers::SPECIAL_KEY)
                 }
                 "--key" => {
                     self.keys_handler.key = Self::what_is_key(&value).unwrap_or(KeysHandlers::KEY)
                 }
                 "--culture-file" => self
-                    .if_change_path_culture_file(&value)
-                    .expect("Error change path culture file"),
+                    .if_change_path_culture_file(&value)?,
+                "--console-hide" => hide_console = value == "true",
                 _ => (),
             }
         }
+        Config::hide_console_window( hide_console);
+        Ok(())
     }
 
     fn if_change_path_culture_file(&mut self, path: &str) -> Result<(), &'static str> {
         let path_ = Path::new(path);
-        path_.try_exists().expect("No such file exits");
 
         if !path_.is_file() {
             return Err("Isn`t file");
         }
 
         self.culture_info_path = path.to_owned();
-        self.culture_info = Option::from(Self::get_keys(&self.culture_info_path));
+        self.culture_info = Option::from(Self::get_keys(&self.culture_info_path)?);
         Ok(())
     }
 
@@ -76,6 +78,7 @@ impl Config {
             .chars()
             .next()
             .expect("Error get first element") as u8;
+        
         if !(65..=90).contains(&key_with_str) {
             return Err("char is uncorrected");
         }
@@ -89,7 +92,7 @@ impl Config {
             "ctrl" | "control" => Ok(Vk::Control),
             "shift" => Ok(Vk::Shift),
             "win" | "windows" => Ok(Vk::RightWin),
-            _ => Err("Not have that key"),
+            _ => Err("Not have that sp key"),
         }
     }
 
@@ -110,8 +113,15 @@ impl Config {
         exit_hash_map
     }
 
-    fn get_keys(culture_info_path: &String) -> HashMap<char, char> {
-        serde_json::from_str(&read_to_string(culture_info_path).expect("Error read culture file"))
-            .unwrap()
+    fn get_keys(culture_info_path: &String) -> Result<HashMap<char, char>, &'static str> {
+        let error_msg = "Error read culture file";
+        let culture_info = match read_to_string(culture_info_path) {
+            Ok(ok) => ok,
+            Err(_) => return Err(error_msg),
+        };
+        match serde_json::from_str(&culture_info) {
+            Ok(ok) => Ok(ok),
+            Err(_) => Err(error_msg),
+        }
     }
 }
