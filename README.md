@@ -1,4 +1,6 @@
-📌<h1> This program is designed to translate text into the correct layout when typing is incorrect. </h1>📌
+<h1>📌 This program is designed to translate text into the correct layout when typing is incorrect.📌 </h1>
+
+<img alt="Icon" src="https://github.com/jestsi/TranslateUncorrectLayout/blob/master/assets/header.png?raw=true" />
 <h3> Example <code> ghbdtn -> привет </code> Just (by default) pressing Alt + T the line will translate the layout. </h3>
 
 ---
