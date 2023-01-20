@@ -1,6 +1,7 @@
 use std::mem::MaybeUninit;
+use tokio::sync::mpsc;
+use tray_item::TrayItem;
 use winapi::um::winuser;
-use {std::sync::mpsc, tray_item::TrayItem};
 
 pub struct TrayPart;
 
@@ -12,11 +13,8 @@ pub enum Message {
 impl TrayPart {
     pub(crate) const LINK_TO_REPOSITORY: &'static str = "https://github.com/jestsi/TranslateUncorrectLayout#-this-program-is-designed-to-translate-text-into-the-correct-layout-when-typing-is-incorrect-";
 
-    pub fn start_listening_events() {
+    pub fn start_listen_tray_events() {
         let mut tray = TrayItem::new("GGTranslateUncorrectedLayout", "tray-icon-name").unwrap();
-
-        let (tx, rx) = mpsc::channel();
-        let tx1 = tx.clone();
 
         tray.add_menu_item("About", move || {
             tx.send(Message::About).unwrap();
@@ -24,16 +22,8 @@ impl TrayPart {
         .unwrap();
 
         tray.add_menu_item("Quit", move || {
-            tx1.send(Message::Quit).unwrap();
+            std::process::exit(0);
         })
         .unwrap();
-        std::thread::spawn(move || {
-            rx.iter().for_each(|m| match m {
-                Message::Quit => std::process::exit(0),
-                Message::About => open::that(Self::LINK_TO_REPOSITORY).unwrap(),
-                _ => (),
-            });
-        }).join().unwrap();
-        
     }
 }

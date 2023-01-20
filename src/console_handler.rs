@@ -5,10 +5,10 @@ impl Config {
         use winapi::um::wincon::GetConsoleWindow;
         use winapi::um::winuser::{ShowWindow, SW_HIDE, SW_SHOWNORMAL};
 
-        let window = unsafe {GetConsoleWindow()};
-        if !window.is_null(){
+        let window = unsafe { GetConsoleWindow() };
+        if !window.is_null() {
             unsafe {
-                ShowWindow(window, if hide {SW_HIDE} else { SW_SHOWNORMAL });
+                ShowWindow(window, if hide { SW_HIDE } else { SW_SHOWNORMAL });
             }
         }
     }
