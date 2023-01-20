@@ -50,13 +50,12 @@ impl Config {
                 "--key" => {
                     self.keys_handler.key = Self::what_is_key(&value).unwrap_or(KeysHandlers::KEY)
                 }
-                "--culture-file" => self
-                    .if_change_path_culture_file(&value)?,
+                "--culture-file" => self.if_change_path_culture_file(&value)?,
                 "--console-hide" => hide_console = value == "true",
                 _ => (),
             }
         }
-        Config::hide_console_window( hide_console);
+        Config::hide_console_window(hide_console);
         Ok(())
     }
 
@@ -78,7 +77,7 @@ impl Config {
             .chars()
             .next()
             .expect("Error get first element") as u8;
-        
+
         if !(65..=90).contains(&key_with_str) {
             return Err("char is uncorrected");
         }

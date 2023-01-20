@@ -6,7 +6,11 @@ mod tray_icon;
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use std::collections::HashMap;
+use std::sync::mpsc::Receiver;
 use std::thread::sleep;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::UnboundedReceiver;
+use winput::message_loop::Event;
 
 use crate::config::{Config, KeysHandlers};
 use crate::kb_output::KbOutput;
@@ -19,12 +23,9 @@ pub fn run() -> Result<(), &'static str> {
         ClipboardProvider::new().expect("Clipboard Context create fail!");
     let mut cfg = Config::new(KeysHandlers::KEY, KeysHandlers::SPECIAL_KEY);
     cfg.setting_config()?;
-    
-    
-    std::thread::spawn(move || {
-        start_loop(&mut cfg, clipbd_context).expect("TODO: panic message");
-        tray_icon::TrayPart::start_listening_events();
-    }).join().unwrap();
+
+    tray_icon::TrayPart::start_listening_events();
+    main_loop(&mut cfg, clipbd_context).await;
     Ok(())
 }
 
@@ -32,14 +33,25 @@ pub fn hide_console_window(hide: bool) {
     Config::hide_console_window(hide);
 }
 
-fn start_loop(cfg: &mut Config, mut clipbd_context: ClipboardContext) -> Result<(), &'static str> {
+fn start_listening_input_events() -> UnboundedReceiver<Event> {
+    let (tx, rx) = mpsc::unbounded_channel();
     let receiver = message_loop::start().unwrap();
+
+    std::thread::spawn(|| loop {
+        rx.send(receiver.next_event())
+    });
+
+    tx
+}
+
+async fn main_loop(cfg: &mut Config, mut clipbd_context: ClipboardContext) {
     let mut kb = KbOutput::default();
+    let input_events_receiver = start_listening_input_events();
     loop {
         if let message_loop::Event::Keyboard {
             action: winput::Action::Press,
             ..
-        } = receiver.next_event()
+        } = input_events_receiver.recv().await.unwrap()
         {
             if cfg.keys_handler.special_key.is_down() && cfg.keys_handler.key.is_down() {
                 sleep(SLP_DURATION);
