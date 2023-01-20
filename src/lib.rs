@@ -1,6 +1,7 @@
 mod config;
-mod kb_output;
 mod console_handler;
+mod kb_output;
+mod tray_icon;
 
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
@@ -18,8 +19,13 @@ pub fn run() -> Result<(), &'static str> {
         ClipboardProvider::new().expect("Clipboard Context create fail!");
     let mut cfg = Config::new(KeysHandlers::KEY, KeysHandlers::SPECIAL_KEY);
     cfg.setting_config()?;
-
-    start_loop(&mut cfg, clipbd_context)
+    
+    
+    std::thread::spawn(move || {
+        start_loop(&mut cfg, clipbd_context).expect("TODO: panic message");
+        tray_icon::TrayPart::start_listening_events();
+    }).join().unwrap();
+    Ok(())
 }
 
 pub fn hide_console_window(hide: bool) {
@@ -29,7 +35,6 @@ pub fn hide_console_window(hide: bool) {
 fn start_loop(cfg: &mut Config, mut clipbd_context: ClipboardContext) -> Result<(), &'static str> {
     let receiver = message_loop::start().unwrap();
     let mut kb = KbOutput::default();
-
     loop {
         if let message_loop::Event::Keyboard {
             action: winput::Action::Press,
@@ -50,7 +55,9 @@ fn start_loop(cfg: &mut Config, mut clipbd_context: ClipboardContext) -> Result<
 
                 let translated_result = if cfg.culture_info.is_some() {
                     translate(string_for_translate, cfg.culture_info.as_ref().unwrap())?
-                } else { String::new() };
+                } else {
+                    String::new()
+                };
 
                 clipbd_context.set_contents(translated_result).unwrap();
 
@@ -68,12 +75,14 @@ fn translate(
     str_for_translate: String,
     keys: &HashMap<char, char>,
 ) -> Result<String, &'static str> {
-    if str_for_translate.is_empty() { return Ok(String::new()) }
+    if str_for_translate.is_empty() {
+        return Ok(String::new());
+    }
     let count_x_chars = str_for_translate
         .chars()
         .filter(|x| !x.is_alphabetic() || x.is_ascii_alphabetic())
         .count();
-    
+
     let mut keys_mut = keys.clone();
     if count_x_chars != str_for_translate.len() {
         keys_mut = inverse_hashmap(&keys_mut);

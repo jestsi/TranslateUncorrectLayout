@@ -1,9 +1,7 @@
 use std::io;
-use winres::WindowsResource;
+use windres::Build;
 
 fn main() -> io::Result<()> {
-    WindowsResource::new()
-        .set_icon("assets/icon.ico")
-        .compile()?;
+    Build::new().compile("tray-data.rc").unwrap();
     Ok(())
 }
