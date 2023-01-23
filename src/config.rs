@@ -12,6 +12,7 @@ pub struct Config {
     pub keys_handler: KeysHandlers,
     pub culture_info_path: String,
     pub culture_info: Option<HashMap<char, char>>,
+    pub hide_console: bool,
 }
 
 impl KeysHandlers {
@@ -29,6 +30,7 @@ impl Config {
                 special_key: sp_key,
             },
             culture_info: None,
+            hide_console: true,
         }
     }
 
@@ -39,24 +41,21 @@ impl Config {
             self.culture_info = Some(Self::get_keys(&self.culture_info_path)?);
             return Ok(());
         }
-        let dictionary_args = Self::get_format_dictanary(&args);
-        let mut hide_console = true;
+        let dictionary_args = Self::get_formatted_dictionary(&args);
+        
         for (key, value) in dictionary_args {
             match key.to_lowercase().as_str() {
-                "--sp-key" => {
-                    self.keys_handler.special_key =
-                        Self::what_is_special_key(&value).unwrap_or(KeysHandlers::SPECIAL_KEY)
-                }
-                "--key" => {
-                    self.keys_handler.key = Self::what_is_key(&value).unwrap_or(KeysHandlers::KEY)
-                }
-                "--culture-file" => self
-                    .if_change_path_culture_file(&value)?,
-                "--console-hide" => hide_console = value == "true",
+                "--sp-key" => self.keys_handler.special_key =
+                        Self::what_is_special_key(&value).unwrap_or(KeysHandlers::SPECIAL_KEY),
+                "--key" => self.keys_handler.key = Self::what_is_key(&value).unwrap_or(KeysHandlers::KEY),
+                "--culture-file" => self.if_change_path_culture_file(&value)?,
+                "--console-hide" => self.hide_console = value == "true",
                 _ => (),
             }
         }
-        Config::hide_console_window( hide_console);
+        
+        Config::hide_console_window( self.hide_console);
+        
         Ok(())
     }
 
@@ -96,7 +95,7 @@ impl Config {
         }
     }
 
-    fn get_format_dictanary(args: &[String]) -> HashMap<String, String> {
+    fn get_formatted_dictionary(args: &[String]) -> HashMap<String, String> {
         let mut exit_hash_map: HashMap<String, String> = HashMap::new();
 
         let mut previous_value = &String::new();

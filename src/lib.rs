@@ -6,6 +6,7 @@ use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use std::collections::HashMap;
 use std::thread::sleep;
+use clipboard::windows_clipboard::WindowsClipboardContext;
 
 use crate::config::{Config, KeysHandlers};
 use crate::kb_output::KbOutput;
@@ -17,16 +18,17 @@ pub fn run() -> Result<(), &'static str> {
     let clipbd_context: ClipboardContext =
         ClipboardProvider::new().expect("Clipboard Context create fail!");
     let mut cfg = Config::new(KeysHandlers::KEY, KeysHandlers::SPECIAL_KEY);
+    
     cfg.setting_config()?;
 
-    start_loop(&mut cfg, clipbd_context)
+    main_loop(&mut cfg, clipbd_context)
 }
 
 pub fn hide_console_window(hide: bool) {
     Config::hide_console_window(hide);
 }
 
-fn start_loop(cfg: &mut Config, mut clipbd_context: ClipboardContext) -> Result<(), &'static str> {
+fn main_loop(cfg: &mut Config, mut clipbd_context: ClipboardContext) -> Result<(), &'static str> {
     let receiver = message_loop::start().unwrap();
     let mut kb = KbOutput::default();
 
