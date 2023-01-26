@@ -5,7 +5,7 @@
 
 ---
 
-### ⚠️ It is imperative that at startup there is a file `culture_info.json` near the exe
+### ⚠️ It is desirable that there is a `culture_info.json` file near the exe
 
 #### Or use the `--culture-file %path%` option to specify the location of the `culture_info.json` file
 
