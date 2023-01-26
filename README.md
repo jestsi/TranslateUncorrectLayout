@@ -12,13 +12,11 @@
 Arguments can be specified at startup.
 If any value of the parameter is not correct, it will be replaced by the standard one.
 
-+ <code> --key {a-z} </code> (Default 'T') Specifies the key for the key combination that causes the translation.
-+ <code> --sp-key Alt/Shift/Ctrl/Win </code> (Default 'Alt') Specifies an additional key for the keyboard shortcut that causes the translation.
-+ <code> --culture-file %path% </code> (Default './') Specifies the location of the layout remapping configuration file
-+ <code> --console-hide true/false </code> (Default 'true') Hide the console window if the value is true, but if an error occurs, the console window will be shown
-
++ `-key {a-z}  (Default 'T')` Specifies the key for the key combination that causes the translation.
++ `--sp-key Alt/Shift/Ctrl/Win` (Default 'Alt') Specifies an additional key for the keyboard shortcut that causes the translation.
++ `--culture-file %path%` (Default './') Specifies the location of the layout remapping configuration file
++ `--console-hide true/false`  (Default 'true') Hide the console window if the value is true, but if an error occurs, the console window will be shown
++ `--culture-generate true/false`  (Default 'true') Generate `culture_info.json` 
 
 #### ⚒️ TODO ⚒️
 + Add app in tray / create another GUI repository based on this
-+ Recoding `culture info` system
-+ Add for other languages `culture_info.json`

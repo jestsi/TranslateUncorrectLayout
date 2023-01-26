@@ -1,6 +1,6 @@
 [package]
 name = "translate_app"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["Maxim Guc", "Gest Se <gestjobm@gmail.com>"]
 readme = "README.md"
