@@ -12,7 +12,7 @@
 Arguments can be specified at startup.
 If any value of the parameter is not correct, it will be replaced by the standard one.
 
-+ `-key {a-z}  (Default 'T')` Specifies the key for the key combination that causes the translation.
++ `-key {a-z}`  (Default 'T') Specifies the key for the key combination that causes the translation.
 + `--sp-key Alt/Shift/Ctrl/Win` (Default 'Alt') Specifies an additional key for the keyboard shortcut that causes the translation.
 + `--culture-file %path%` (Default './') Specifies the location of the layout remapping configuration file
 + `--console-hide true/false`  (Default 'true') Hide the console window if the value is true, but if an error occurs, the console window will be shown
