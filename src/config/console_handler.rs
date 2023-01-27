@@ -13,10 +13,10 @@ impl super::config_app::Config {
         }
     }
 
-    pub fn show_error_msg(str: &str, dur: std::time::Duration) {
+    pub fn show_error_msg(&self, str: &str, dur: std::time::Duration) {
         hide_console_window(false);
         eprintln!("{}", str);
         std::thread::sleep(dur);
-        hide_console_window(true);
+        hide_console_window(self.hide_console);
     }
 }

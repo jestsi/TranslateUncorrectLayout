@@ -18,6 +18,7 @@ pub mod config_app {
         pub culture_info_path: String,
         pub culture_info: Option<HashMap<char, char>>,
         pub hide_console: bool,
+        pub one_key: bool,
         generate_culture_info: bool,
     }
 
@@ -41,6 +42,7 @@ pub mod config_app {
                 culture_info: None,
                 hide_console: true,
                 generate_culture_info: true,
+                one_key: false,
             }
         }
 
@@ -48,10 +50,7 @@ pub mod config_app {
             let args: Vec<String> = args().collect();
 
             if args.len() <= 1 {
-                self.culture_info = Some(Self::get_keys(
-                    &self.culture_info_path,
-                    self.generate_culture_info,
-                )?);
+                self.culture_info = Some(self.get_keys()?);
                 hide_console_window(self.hide_console);
                 return Ok(());
             }
@@ -59,26 +58,24 @@ pub mod config_app {
 
             for (key, value) in dictionary_args {
                 match key.to_lowercase().as_str() {
-                    "--sp-key" => {
+                    "--sp-key" | "-spk" => {
                         self.keys_handler.special_key =
                             Self::what_is_special_key(&value).unwrap_or(KeysHandlers::SPECIAL_KEY)
                     }
-                    "--key" => {
+                    "--key" | "-k" => {
                         self.keys_handler.key =
                             Self::what_is_key(&value).unwrap_or(KeysHandlers::KEY)
                     }
-                    "--culture-file" => self.if_change_path_culture_file(&value)?,
-                    "--console-hide" => self.hide_console = value == "true",
-                    "--culture-generate" => self.generate_culture_info = value == "true",
+                    "--culture-file" | "-cf" => self.if_change_path_culture_file(&value)?,
+                    "--console-hide" | "-ch" => self.hide_console = value == "true",
+                    "--culture-generate" | "-cg" => self.generate_culture_info = value == "true",
+                    "--one-key" | "-ok" => self.one_key = value == "true",
                     _ => (),
                 }
             }
 
             if self.culture_info.is_none() {
-                self.culture_info = Some(Self::get_keys(
-                    &self.culture_info_path,
-                    self.generate_culture_info,
-                )?);
+                self.culture_info = Some(self.get_keys()?);
             }
             hide_console_window(self.hide_console);
             Ok(())
@@ -93,10 +90,7 @@ pub mod config_app {
             } else {
                 self.culture_info_path = String::new();
             }
-            self.culture_info = Option::from(Self::get_keys(
-                &self.culture_info_path,
-                self.generate_culture_info,
-            )?);
+            self.culture_info = Option::from(self.get_keys()?);
             Ok(())
         }
 
@@ -116,7 +110,7 @@ pub mod config_app {
 
         fn what_is_special_key(kb_key: &str) -> Result<Vk, &'static str> {
             match kb_key.to_lowercase().as_str() {
-                "alt" => Ok(Vk::Alt),
+                "alt" | "menu" => Ok(Vk::Alt),
                 "ctrl" | "control" => Ok(Vk::Control),
                 "shift" => Ok(Vk::Shift),
                 "win" | "windows" => Ok(Vk::RightWin),
@@ -141,19 +135,16 @@ pub mod config_app {
             exit_hash_map
         }
 
-        fn get_keys(
-            culture_info_path: &String,
-            generate_file: bool,
-        ) -> Result<HashMap<char, char>, &'static str> {
+        fn get_keys(&self) -> Result<HashMap<char, char>, &'static str> {
             let error_msg = "Error read culture file";
-            let culture_info = match read_to_string(culture_info_path) {
+            let culture_info = match read_to_string(&self.culture_info_path) {
                 Ok(ok) => ok,
                 Err(_) => {
-                    Self::show_error_msg(
+                    self.show_error_msg(
                         "Error read culture file, will be use default culture info",
-                        std::time::Duration::from_secs(5),
+                        std::time::Duration::from_secs(3),
                     );
-                    Self::generate_culture_info(generate_file)?
+                    Self::generate_culture_info(self.generate_culture_info)?
                 }
             };
             match serde_json::from_str(&culture_info) {

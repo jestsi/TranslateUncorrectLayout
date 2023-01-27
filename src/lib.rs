@@ -37,7 +37,8 @@ fn main_loop(cfg: &mut Config, mut clipbd_context: ClipboardContext) -> Result<(
             ..
         } = receiver.next_event()
         {
-            if cfg.keys_handler.special_key.is_down() && cfg.keys_handler.key.is_down() {
+            if (!cfg.one_key && cfg.keys_handler.special_key.is_down() && cfg.keys_handler.key.is_down()) ||
+                (cfg.one_key && cfg.keys_handler.key.is_down()) {
                 sleep(SLP_DURATION);
                 kb.select_all.launching();
                 sleep(SLP_DURATION);
