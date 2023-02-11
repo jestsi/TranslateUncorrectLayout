@@ -1,15 +1,15 @@
 use crate::hide_console_window;
 
 impl super::config_app::Config {
-    pub fn hide_console_window(hide: bool) {
+    pub unsafe fn hide_console_window(hide: bool) {
+        use winapi::um::winuser::GetShellWindow;
         use winapi::um::wincon::GetConsoleWindow;
         use winapi::um::winuser::{ShowWindow, SW_HIDE, SW_SHOWNORMAL};
+        let mut window = GetConsoleWindow();
+        if window.is_null() { window = GetShellWindow(); }
 
-        let window = unsafe { GetConsoleWindow() };
-        if !window.is_null() {
-            unsafe {
-                ShowWindow(window, if hide { SW_HIDE } else { SW_SHOWNORMAL });
-            }
+        if window.is_null() {
+            ShowWindow(window, if hide { SW_HIDE } else { SW_SHOWNORMAL });
         }
     }
 
